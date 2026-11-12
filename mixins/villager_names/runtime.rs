@@ -20,7 +20,7 @@ use std::sync::{LazyLock, Mutex};
 use crate::mobs::Species;
 
 pub const ID: &str = "villager_names";
-pub const VERSION: &str = "0.1.0";
+pub const VERSION: &str = "0.2.0";
 pub const DESCRIPTION: &str =
     "Every villager gets a name from its own region, and keeps the trade it had.";
 
@@ -112,6 +112,15 @@ pub fn wants_a_name(m: &crate::mobs::Mob) -> bool {
 /// Whether the name on a villager is the one we gave it.
 pub fn is_ours(id: u32, name: &str) -> bool {
     NAMED.lock().unwrap().get(&id).map(String::as_str) == Some(name)
+}
+
+/// Whether a name on a villager is one we gave in an earlier session: the
+/// given and family name are ours even if the trade has since changed.
+pub fn named_by_us(region: &Region, id: u32, profession: &str, current: &str) -> bool {
+    fn head(name: &str) -> &str {
+        name.split_once(", ").map_or(name, |(head, _)| head)
+    }
+    head(&name_for(region, id, profession)) == head(current)
 }
 
 /// Remember the name we gave a villager.
@@ -226,6 +235,22 @@ mod tests {
             name_for(region, 4242, "farmer"),
             name_for(region, 4242, "farmer")
         );
+    }
+
+    #[test]
+    fn a_name_from_an_earlier_session_is_still_ours() {
+        let region = REGIONS[0];
+        let name = name_for(region, 4242, "farmer");
+        assert!(named_by_us(region, 4242, "farmer", &name));
+        // The trade changed since the name was given: the head is still ours.
+        assert!(named_by_us(region, 4242, "cleric", &name));
+    }
+
+    #[test]
+    fn a_players_own_name_is_not_ours() {
+        let region = REGIONS[0];
+        assert!(!named_by_us(region, 4242, "farmer", "Bartholomew"));
+        assert!(!named_by_us(region, 4242, "farmer", ""));
     }
 
     #[test]

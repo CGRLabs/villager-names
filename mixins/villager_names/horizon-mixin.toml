@@ -1,6 +1,6 @@
 [mod]
 id = "villager_names"
-version = "0.1.0"
+version = "0.2.0"
 priority = 100
 
 # The rendering adapters depend on this revision's model and animation layout.

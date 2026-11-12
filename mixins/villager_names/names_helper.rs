@@ -49,18 +49,32 @@ fn on_level_tick_post(game: &mut crate::game::Game<'_>, dimension: &str) {
             continue;
         };
         match current {
-            // A name we gave: keep it, and bring the trade up to date.
-            Some(current) if vn::is_ours(id, &current) => {
+            // A name we gave — this session or an earlier one: keep it, bring
+            // the trade up to date, and show it only under the crosshair.
+            Some(current)
+                if vn::is_ours(id, &current)
+                    || vn::named_by_us(region, id, profession, &current) =>
+            {
                 if name != current {
                     m.custom_name = Some(name.clone());
-                    vn::remember(id, &name);
+                    m.needs_sync = true;
                 }
+                if m.name_visible {
+                    m.name_visible = false;
+                    m.needs_sync = true;
+                }
+                vn::remember(id, &name);
             }
             // A name the player gave with a name tag: never touched.
             Some(_) => {}
             None => {
                 m.custom_name = Some(name.clone());
-                m.name_visible = true;
+                // Hover-only: game/names.rs shows a name when name_visible or
+                // the mob is under the crosshair. We want the latter.
+                m.name_visible = false;
+                // The window client only learns of a name change when the mob
+                // is marked for sync (game/native_mobs.rs does the same).
+                m.needs_sync = true;
                 vn::remember(id, &name);
             }
         }

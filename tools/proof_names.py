@@ -49,7 +49,7 @@ def main():
         env[key] = tempfile.mkdtemp(prefix="names-")
     env["HORIZON_NO_AUDIO"] = "1"
     env["HORIZON_LAUNCHER_NO_SELF_UPDATE"] = "1"
-    log = (OUT / "names-v01.log").open("w", encoding="utf-8")
+    log = (OUT / "names-v02.log").open("w", encoding="utf-8")
     report = {"game": str(Path(args.game).resolve()), "scratch_home": str(home)}
 
     def say(msg):
@@ -95,16 +95,22 @@ def main():
     def shot(name, pos):
         x, y, z = pos
         ctl("tp", str(x), str(y), str(z + 4))
-        ctl("look-at", str(x), str(y + 1.2), str(z))
+        # Names draw only under the crosshair now: aim at a villager, not a point.
+        near = min(villagers(), key=lambda m: (m["pos"][0] - x) ** 2 + (m["pos"][2] - z) ** 2)
+        ctl("look-at", "entity", str(near["id"]))
         wait(8)
-        path = OUT / f"names-v01-{name}.png"
+        # Villagers wander: re-aim just before the shutter so the crosshair is
+        # still on one when the frame is taken.
+        ctl("look-at", "entity", str(near["id"]))
+        wait(2)
+        path = OUT / f"names-v02-{name}.png"
         ctl("screenshot", str(path))
         say(f"screenshot {name}: {path}")
 
     try:
         say(f"scratch home: {home}")
         say("launching VISIBLE window...")
-        ctl("launch", "--game", str(Path(args.game).resolve()), "--world", "VillagerNamesV01",
+        ctl("launch", "--game", str(Path(args.game).resolve()), "--world", "VillagerNamesV02",
             "--creative", "--wait", "--render-distance", "6", "--resources", args.resources,
             "--test-terrain", timeout=420)
         ctl("wait-ready", "120", timeout=150)
@@ -198,7 +204,7 @@ def main():
         say(f"FAILED: {exc}")
         raise
     finally:
-        (OUT / "names-v01-report.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
+        (OUT / "names-v02-report.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
         try:
             ctl("quit", timeout=90)
         except Exception as exc:

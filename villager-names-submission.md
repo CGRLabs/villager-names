@@ -1,43 +1,55 @@
-# Villager Names 0.1.0 — registry submission sheet
+# Villager Names 0.2.0 — registry submission sheet
 
 Submit at: https://playhorizon.dev/mods/submit (sign in with GitHub as CGRLabs), choose **new
 project** — `villager_names` is not in the registry yet.
-**Verified in-game 2026-11-11**: four villagers named from the Lowlands, all four with their
-trade, and a name the player gave kept.
+**Verified in-game 2026-11-12**: the name draws above a villager only while the crosshair is on
+it, goes when you look away, comes back when you look again; four villagers named from the
+Lowlands with their trades; a name the player gave kept and shown on hover too.
+
+**What changed in 0.2.0:** names used to hang over every villager all the time. Now a name
+appears **only while your crosshair is on the villager** — the way a name-tagged mob behaves in
+vanilla. The world stays clean until you ask. Nothing else changed: same 620 names, same ten
+regions, same trade in the name, same promise never to touch a name you gave yourself.
 
 ## Form fields
 
 | Field | Value |
 | --- | --- |
 | Kind | Native mod (.hnmod) |
-| File | `D:\CGRLabs\Horizon-Ecosystem\prototypes\villager-names\target\villager_names-0.1.0.hnmod` |
+| File | `D:\CGRLabs\Horizon-Ecosystem\prototypes\villager-names\target\villager_names-0.2.0.hnmod` |
 | Id | `villager_names` |
-| Version | `0.1.0` |
+| Version | `0.2.0` |
 | For Minecraft | `26.3` |
 | Name | Villager Names |
 | Licence | MIT |
 | Authors | CGRLabs |
-| Source code | *(not published yet — see "Still to do")* |
+| Source code | https://github.com/CGRLabs/villager-names |
 | Categories | social, adventure |
 | Tags | villagers, names, npc, immersion, roleplay |
 | Icon | `D:\CGRLabs\Horizon-Ecosystem\prototypes\villager-names\icon.png` **(to be supplied)** |
 | Hook points | none declared — the bundle is pinned to Horizon `36f4bc00` |
 | Public key | `RWSjKGIJUKKXHvvhxzNN2VPPrXSEr47JXVgGpCwrOOHoneuQjTWWvk1g` (the Hub key, the same one Gyro uses) |
-| Signature | `D:\CGRLabs\Horizon-Ecosystem\prototypes\villager-names\target\villager_names-0.1.0.hnmod.minisig` |
+| Signature | `D:\CGRLabs\Horizon-Ecosystem\prototypes\villager-names\target\villager_names-0.2.0.hnmod.minisig` |
 
 ## Release facts
 
-- File size: **12 610 bytes**
-- SHA-256: `a529a41e7383a720d3059d2576fe924195218dbeb112005a4e9e0cc295e34d99`
+- Bundle: **13 051 bytes**, SHA-256 `3c24629641c0a9abc5db4101291fee85d9acd017cdff2b7563f05ad4945090ad`
 - Pinned to Horizon `36f4bc00d6fc644f1ad118ddd926a997a034cb48`, horizon-mixins
   `d9c83d7096b7ea5b83678da2efdfd6161f74997e`, mixin schema 6
-- `cargo horizon-mod check` → `{"ok":true, …, "kind":"native-mod", "sha256":"a529a41e…34d99"}`
-- The mod inspector: **0 errors**, 15 files verified in the bundle
-- Signature: minisign, verified against the Hub public key (`signature: VALID`)
+- Signature: minisign with the Hub key, `villager_names-0.2.0.hnmod.minisig`
+- Prebuilt Windows client (for players without a Microsoft account):
+  `horizon-client-villagernames-0.2.0-windows-x64.zip`, **23 157 258 bytes**,
+  SHA-256 `51e8c41b04934a059e21c663c8880d4a1c8949cd0434f885e0150bd7b9ee2363`;
+  inside it `horizon-client-villagernames.exe`, **63 135 232 bytes**,
+  SHA-256 `2a642c138480e7158f165a0fd14fd007277c8f30462c7d529d469679f5e98d0a`
+- All three assets on GitHub release **v0.2.0** of `CGRLabs/villager-names`
+- Installed locally: `horizon-windows-x64\horizon-client-villagernames.exe`, bundle and signature
+  in `horizon-windows-x64\horizon-native-mods\`
 
 ## What it does
 
-Every villager gets a name from the region it lives in, and keeps the trade it had.
+Every villager gets a name from the region it lives in, and keeps the trade it had. You see the
+name when you look at them — not before.
 
 **The names.** Ten regions, each with its own given names, family names and a folkloric rare
 tier — **620 names in all**: 460 given names and 160 family names.
@@ -58,6 +70,10 @@ tier — **620 names in all**: 460 given names and 160 family names.
 Three tiers, as in the Java mod: **common** (most villagers), **uncommon** (one in four) and
 **rare** (one in twenty — the names of the region's legends).
 
+**The name shows when you look.** A villager's name appears above its head only while your
+crosshair is on it, exactly like a vanilla name-tagged mob. Look away and it is gone; the
+villager keeps its name in the world's data either way.
+
 **The trade stays in the name.** Horizon shows a villager's custom name on the trade screen
 *instead of* its profession (`trading.rs:675` — `let name = custom.unwrap_or_else(|| …the
 profession…)`), so naming a villager would hide its job. This mod puts the trade back:
@@ -66,29 +82,45 @@ profession…)`), so naming a villager would hide its job. This mod puts the tra
 
 **The names never move.** A name comes from the villager's own identity, so the same villager has
 the same name in every session and on every machine. A villager the player named with a name tag
-is never touched. A villager that finds a job later gets its trade added to the name it already
-had.
+is never touched — and its name shows on hover like any other. A villager that finds a job later
+gets its trade added to the name it already had.
 
 **No gameplay changes.** No trades, prices, professions or AI are touched — the mod is a layer of
 names over the world you already have.
 
-## In-game proof — VERIFIED 2026-11-11
+## In-game proof — VERIFIED 2026-11-12
 
-`python tools/proof_names.py` against the real client on a scratch world, with a composter, a
-blast furnace, a brewing stand and a cartography table for the villagers to work at.
+Two harnesses against the real client on scratch worlds. The hover harness cannot trust
+`ctl state`'s `name_tags` (that field is computed on the headless serving game, whose HUD is
+hidden, so it reads empty even while the window draws the name): it judges the **rendered frame**
+instead, from a fixed camera, by pixel difference in the band above the villager's head.
+
+`python tools/proof_hover.py` — one still villager, camera never moves:
+
+| Check | Result |
+| --- | --- |
+| Crosshair on the villager | its name drawn above it (*Beornwulf Hartwood*) |
+| Villager moved aside, camera fixed | name gone — 22 760 pixels changed in the name band |
+| Villager moved back | name returns — 23 107 pixels changed against the away frame |
+| Name in the entity data while nothing is drawn | kept |
+| A name the player gave (*Bartholomew*) | drawn on hover, gone off hover (18 481 pixels), never rewritten |
+
+`python tools/proof_names.py` — a village with a composter, a blast furnace, a brewing stand and
+a cartography table:
 
 | Check | Result |
 | --- | --- |
 | The villagers named | 4, all from the Lowlands table |
-| The trades in the names | 4 of 4 — *the Cleric*, *the Armorer*, *the Farmer*, *the Cartographer* |
-| The names stayed put | the names did not change over 60 ticks (a trade may be added to a name) |
+| The trades in the names | 4 of 4 — *the Farmer*, *the Armorer*, *the Cleric*, *the Cartographer* |
+| The names stayed put | unchanged over 60 ticks |
 | A name the player gave | **kept** — the mod did not overwrite it |
 | Two villagers with one name | none |
 
-The proof's own picture shows it: *Sewin Barleyleigh, the Cleric* over a villager, and
-*Bartholomew* — the name the player gave — untouched beside it.
+The pictures show it: `target/proof/hover-v02-name.png` (the name over the hovered villager),
+`hover-v02-away.png` (same camera, no name), `hover-v02-player-name.png` (*Bartholomew* on hover),
+and `names-v02-village.png` (one hovered villager named, the rest of the village clean).
 
-Unit tests, 7 of 7 pass (`cargo test -p horizon-client --lib villager_names::tests`):
+Unit tests, 9 of 9 pass (`cargo test -p horizon-client --lib villager_names::tests`):
 
 | Test | What it holds |
 | --- | --- |
@@ -98,6 +130,8 @@ Unit tests, 7 of 7 pass (`cargo test -p horizon-client --lib villager_names::tes
 | `a_name_is_a_given_name_a_family_and_the_trade` | the shape of a name |
 | `a_villager_without_a_trade_gets_no_epithet` | a nitwit or an unemployed villager gets no trade |
 | `the_same_villager_always_has_the_same_name` | names are stable |
+| `a_name_from_an_earlier_session_is_still_ours` | a name the mod gave before is recognised again |
+| `a_players_own_name_is_not_ours` | a player's name is never claimed or rewritten |
 | `a_rare_name_is_rare` | the rare tier is about one in twenty |
 
 ## Description (paste into the Markdown box)
@@ -107,6 +141,10 @@ name, and then it is a person who happens to be a farmer. This mod gives every v
 from the region it lives in, and keeps the trade it had.
 
 > **Elsbeth Ashdown, the Fletcher** · **Runa Skjold, the Smith** · **Amira Taziri, the Weaver**
+
+**Look at a villager to learn its name.** The name appears above its head only while your
+crosshair is on it, the way a name-tagged mob behaves in vanilla — so a village stays a village
+to look at, not a wall of floating labels. Look away and the name goes; the villager keeps it.
 
 **The names belong to the place.** The Lowlands, the Northlands, the Dunes, the Green Deep and
 six more regions, each with its own names, its own family names and its own legends. A village
@@ -122,7 +160,7 @@ added to the name it already had.
 **Nothing else changes.** No trades, no prices, no professions, no villager AI. It is a layer of
 names over the world you already have. A name never moves: the same villager has the same name
 in every session and on every machine. And a villager you name yourself with a name tag keeps
-that name — this mod will not touch it.
+that name — this mod will not touch it, and shows it on hover like any other.
 
 *Native mods are unsandboxed code running with your account's permissions; install only from
 authors you trust.*
@@ -132,10 +170,7 @@ authors you trust.*
 - **The icon** — a villager with a name tag over its head, as the picture shows the mod. PNG, at
   most 256 KiB, dropped at `prototypes/villager-names/icon.png`. The registry square-crops it,
   so a square picture is best.
-- **Publish the source** — the registry's pull-request template asks that the `source` link has
-  the code the file was built from. The source should go to
-  `https://github.com/CGRLabs/villager-names` (a public repo), like Flesh to Leather and Gyro.
 - **Fill in the form** at https://playhorizon.dev/mods/submit with the table above and the
-  description.
+  description. New project: paste **both** the public key and the signature.
 - **Wait for the review.** A project's first listing is always reviewed by a person; later
   versions by the same owner are merged automatically once the checks pass.
