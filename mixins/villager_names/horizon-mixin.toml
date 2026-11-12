@@ -1,0 +1,105 @@
+[mod]
+id = "villager_names"
+version = "0.1.0"
+priority = 100
+
+# The rendering adapters depend on this revision's model and animation layout.
+[compatibility]
+horizon_revision = "36f4bc00d6fc644f1ad118ddd926a997a034cb48"
+
+[[module]]
+id = "villager_names"
+file = "crates/horizon-client/src/lib.rs"
+name = "villager_names"
+source = "runtime.rs"
+visibility = "pub"
+
+# One module per region, so each region's names live in a file of their own.
+[[module]]
+id = "villager_names_lowlands"
+file = "crates/horizon-client/src/lib.rs"
+name = "villager_names_lowlands"
+source = "names_lowlands.rs"
+visibility = "pub"
+
+[[module]]
+id = "villager_names_northlands"
+file = "crates/horizon-client/src/lib.rs"
+name = "villager_names_northlands"
+source = "names_northlands.rs"
+visibility = "pub"
+
+[[module]]
+id = "villager_names_hills"
+file = "crates/horizon-client/src/lib.rs"
+name = "villager_names_hills"
+source = "names_hills.rs"
+visibility = "pub"
+
+[[module]]
+id = "villager_names_dunes"
+file = "crates/horizon-client/src/lib.rs"
+name = "villager_names_dunes"
+source = "names_dunes.rs"
+visibility = "pub"
+
+[[module]]
+id = "villager_names_savanna"
+file = "crates/horizon-client/src/lib.rs"
+name = "villager_names_savanna"
+source = "names_savanna.rs"
+visibility = "pub"
+
+[[module]]
+id = "villager_names_greendeep"
+file = "crates/horizon-client/src/lib.rs"
+name = "villager_names_greendeep"
+source = "names_greendeep.rs"
+visibility = "pub"
+
+[[module]]
+id = "villager_names_underhollow"
+file = "crates/horizon-client/src/lib.rs"
+name = "villager_names_underhollow"
+source = "names_underhollow.rs"
+visibility = "pub"
+
+[[module]]
+id = "villager_names_emberdeep"
+file = "crates/horizon-client/src/lib.rs"
+name = "villager_names_emberdeep"
+source = "names_emberdeep.rs"
+visibility = "pub"
+
+[[module]]
+id = "villager_names_shore"
+file = "crates/horizon-client/src/lib.rs"
+name = "villager_names_shore"
+source = "names_shore.rs"
+visibility = "pub"
+
+[[module]]
+id = "villager_names_void"
+file = "crates/horizon-client/src/lib.rs"
+name = "villager_names_void"
+source = "names_void.rs"
+visibility = "pub"
+
+[[injection]]
+id = "mod-entry"
+kind = "HEAD"
+target = "horizon_client::game::native_hooks::Game<'_>::native_mods"
+helper = "list_helper.rs"
+bindings = [
+    { name = "mods", ty = "&mut Vec<crate::game::native_hooks::NativeMod>", value = "&mut *mods" },
+]
+
+[[injection]]
+id = "name-villagers"
+kind = "HEAD"
+target = "horizon_client::game::native_hooks::Game<'_>::native_level_tick_post"
+helper = "names_helper.rs"
+bindings = [
+    { name = "game", ty = "&mut crate::game::Game<'_>", value = "&mut *self" },
+    { name = "dimension", ty = "&str", value = "dimension" },
+]

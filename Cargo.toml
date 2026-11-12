@@ -1,0 +1,13 @@
+[package]
+name = "horizon-villager-names"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.95"
+license = "MIT"
+description = "Villager Names: every villager gets a name from its own region, and keeps its trade"
+
+[lib]
+# This exact source is also injected as a same-crate module by horizon-mixins.
+path = "mixins/villager_names/runtime.rs"
+
+[workspace]
