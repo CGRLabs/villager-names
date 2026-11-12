@@ -43,6 +43,8 @@ regions, same trade in the name, same promise never to touch a name you gave you
   inside it `horizon-client-villagernames.exe`, **63 135 232 bytes**,
   SHA-256 `2a642c138480e7158f165a0fd14fd007277c8f30462c7d529d469679f5e98d0a`
 - All three assets on GitHub release **v0.2.0** of `CGRLabs/villager-names`
+  (https://github.com/CGRLabs/villager-names/releases/tag/v0.2.0); GitHub's sha256 digests
+  match the local hashes above
 - Installed locally: `horizon-windows-x64\horizon-client-villagernames.exe`, bundle and signature
   in `horizon-windows-x64\horizon-native-mods\`
 
