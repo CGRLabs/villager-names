@@ -1,5 +1,7 @@
 # Villager Names
 
+![Villager Names icon](icon.png)
+
 Every villager gets a name from the region it lives in — and keeps the trade it had.
 
 A village of eight no longer stops being a village the moment you name one of them. With this
@@ -71,11 +73,9 @@ re-written without touching the rest.
 
 ## The icon
 
-Drop it at `icon.png` in this folder. The registry takes a **PNG of at most 256 KiB**; the
-listing square-crops it, so a square picture is best.
+![Villager Names icon](icon.png)
 
-> A villager with a name tag over its head — the name is the point of the mod, so it should be
-> the first thing you see.
+The registry takes a **PNG of at most 256 KiB**; the listing square-crops it, so a square picture is best. The picture: a villager with a name tag over its head — the name is the point of the mod, so it should be the first thing you see.
 
 ## Licence
 
