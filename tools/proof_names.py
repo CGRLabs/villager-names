@@ -34,6 +34,11 @@ def main():
     ap.add_argument("--ctl", default=str(INSTALL / "horizon-ctl.exe"))
     ap.add_argument("--resources", default=str(INSTALL / ".local" / "horizon-client" / "26.3"))
     ap.add_argument("--seconds", type=int, default=60)
+    # `--attach` drives a game that is already running in the given home, instead
+    # of starting one: ctl's own launch path dies on this build just after the
+    # mods load, while the game itself runs fine when started directly.
+    ap.add_argument("--attach", action="store_true")
+    ap.add_argument("--home")
     args = ap.parse_args()
     OUT.mkdir(parents=True, exist_ok=True)
 
@@ -41,14 +46,19 @@ def main():
     assert given, "the Lowlands table is empty"
 
     env = dict(os.environ)
-    home = Path(tempfile.mkdtemp(prefix="names-home-"))
+    if args.attach:
+        assert args.home, "--attach needs --home"
+        home = Path(args.home)
+        home.mkdir(parents=True, exist_ok=True)
+    else:
+        home = Path(tempfile.mkdtemp(prefix="names-home-"))
     env["HORIZON_HOME"] = str(home)
     env["HORIZON_CONTROL"] = str(home / "control.sock")
     for key in ("HORIZON_LAUNCHER_HOME", "XDG_DATA_HOME", "XDG_CONFIG_HOME"):
         env[key] = tempfile.mkdtemp(prefix="names-")
     env["HORIZON_NO_AUDIO"] = "1"
     env["HORIZON_LAUNCHER_NO_SELF_UPDATE"] = "1"
-    log = (OUT / "names-v03.log").open("w", encoding="utf-8")
+    log = (OUT / "names-v03-wasm.log").open("w", encoding="utf-8")
     report = {"game": str(Path(args.game).resolve()), "scratch_home": str(home)}
 
     def say(msg):
@@ -88,8 +98,13 @@ def main():
         """Every villager's name, in one query: the server answers one line each."""
         value = command(f"execute as @e[type={VILLAGER}] run data get entity @s CustomName")
         chat = " ".join(value.get("chat", []))
-        # Each line reads: Villager has the following entity data: "Sewin Barleyleigh, the Cleric"
-        return [name for name in re.findall(r'entity data:\s*"([^"]*)"', chat) if name]
+        # Each line reads: Villager has the following entity data: {text: "Sewin"}, or
+        # the plain quoted text on a build that prints the component as a string.
+        return [
+            name
+            for name in re.findall(r'entity data:\s*(?:\{text:\s*)?"([^"]*)"', chat)
+            if name
+        ]
 
     def shot(name, pos):
         x, y, z = pos
@@ -102,16 +117,23 @@ def main():
         # still on one when the frame is taken.
         ctl("look-at", "entity", str(near["id"]))
         wait(2)
-        path = OUT / f"names-v03-{name}.png"
+        path = OUT / f"names-v03-wasm-{name}.png"
         ctl("screenshot", str(path))
         say(f"screenshot {name}: {path}")
 
     try:
         say(f"scratch home: {home}")
-        say("launching VISIBLE window...")
-        ctl("launch", "--game", str(Path(args.game).resolve()), "--world", "VillagerNamesV03",
-            "--creative", "--wait", "--render-distance", "6", "--resources", args.resources,
-            "--test-terrain", timeout=420)
+        if args.attach:
+            say(f"attaching to the running game at {env['HORIZON_CONTROL']}")
+        else:
+            say("launching VISIBLE window...")
+            ctl("launch", "--game", str(Path(args.game).resolve()), "--world", "VillagerNamesV03",
+                "--creative", "--wait", "--render-distance", "6", "--resources", args.resources,
+                # The game folder is where `horizon-mods/` is read from, and it defaults to
+                # the working directory: pin it to the executable's own folder so the
+                # installed package is the one under test.
+                "--gameDir", str(Path(args.game).resolve().parent),
+                "--test-terrain", timeout=420)
         ctl("wait-ready", "120", timeout=150)
         ctl("options-set", "pauseOnLostFocus", "false")
         for _ in range(6):
@@ -187,7 +209,7 @@ def main():
         say(f"FAILED: {exc}")
         raise
     finally:
-        (OUT / "names-v03-report.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
+        (OUT / "names-v03-wasm-report.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
         try:
             ctl("quit", timeout=90)
         except Exception as exc:
