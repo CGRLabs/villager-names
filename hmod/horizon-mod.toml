@@ -1,0 +1,14 @@
+id = "villager_names"
+name = "Villager Names"
+version = "0.3.0"
+description = "Every villager gets a one-word name from the region it lives in, shown only while you look at it."
+authors = ["CGRLabs"]
+api = "0.2"
+side = "both"
+# The `.hmod` manifest is the content-side one, and that schema requires
+# `registries` whatever the mod registers; this one registers nothing.
+capabilities = ["registries"]
+
+[wasm]
+sha512 = "5626e9f9a9845a56846003379bf582a054412605aa573b03e2d2a45cf2cf4b63627b1be1baabac846a3d62b0bbd50625e4e6ba4f98fb89e4e681dde80f6a61eb"
+toolchain = "1.99.1 58cf8f9c35b355199727627d07ae34a4e2846d67"

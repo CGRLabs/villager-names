@@ -1,5 +1,5 @@
-"""In-game checks for Villager Names: the names, the region, the trade, and
-the names a player gives themselves."""
+"""In-game checks for Villager Names: the one-word names, the region they
+come from, and the names a player gives themselves."""
 
 import argparse
 import json
@@ -16,7 +16,7 @@ OUT = ROOT / "target" / "proof"
 VILLAGER = "minecraft:villager"
 
 # The names the Lowlands table holds, read from the mod's own source.
-LOWLANDS = ROOT / "mixins" / "villager_names" / "names_lowlands.rs"
+LOWLANDS = ROOT / "hmod" / "src" / "names.rs"
 
 
 def names_from(path, field):
@@ -38,8 +38,7 @@ def main():
     OUT.mkdir(parents=True, exist_ok=True)
 
     given = names_from(LOWLANDS, "common") + names_from(LOWLANDS, "uncommon") + names_from(LOWLANDS, "rare")
-    families = names_from(LOWLANDS, "families")
-    assert given and families, "the Lowlands table is empty"
+    assert given, "the Lowlands table is empty"
 
     env = dict(os.environ)
     home = Path(tempfile.mkdtemp(prefix="names-home-"))
@@ -49,7 +48,7 @@ def main():
         env[key] = tempfile.mkdtemp(prefix="names-")
     env["HORIZON_NO_AUDIO"] = "1"
     env["HORIZON_LAUNCHER_NO_SELF_UPDATE"] = "1"
-    log = (OUT / "names-v02.log").open("w", encoding="utf-8")
+    log = (OUT / "names-v03.log").open("w", encoding="utf-8")
     report = {"game": str(Path(args.game).resolve()), "scratch_home": str(home)}
 
     def say(msg):
@@ -103,14 +102,14 @@ def main():
         # still on one when the frame is taken.
         ctl("look-at", "entity", str(near["id"]))
         wait(2)
-        path = OUT / f"names-v02-{name}.png"
+        path = OUT / f"names-v03-{name}.png"
         ctl("screenshot", str(path))
         say(f"screenshot {name}: {path}")
 
     try:
         say(f"scratch home: {home}")
         say("launching VISIBLE window...")
-        ctl("launch", "--game", str(Path(args.game).resolve()), "--world", "VillagerNamesV02",
+        ctl("launch", "--game", str(Path(args.game).resolve()), "--world", "VillagerNamesV03",
             "--creative", "--wait", "--render-distance", "6", "--resources", args.resources,
             "--test-terrain", timeout=420)
         ctl("wait-ready", "120", timeout=150)
@@ -133,7 +132,7 @@ def main():
         ctl("tp", "0", "90", "0")
         wait(10)
 
-        # A village with work to do, so the villagers have trades to keep.
+        # A few workstations so the scene reads as a village.
         command("setblock -8 90 0 minecraft:composter")
         command("setblock -4 90 0 minecraft:blast_furnace")
         command("setblock 0 90 0 minecraft:brewing_stand")
@@ -155,35 +154,19 @@ def main():
             f"{len(adults)} villagers but {len(found)} names: {found}"
         assert len(found) >= 4, f"only {len(found)} villagers were named"
 
-        # Every name is a Lowlands given name and a Lowlands family name, and
-        # the trade in it is the trade the villager actually has.
-        trades = {}
-        for m in adults:
-            trade = (m.get("villager") or {}).get("profession")
-            if trade:
-                trades[m["id"]] = trade
+        # Every name is one word, and that word is a Lowlands given name.
         for name in found:
-            parts = name.split(", ")
-            head = parts[0].split(" ")
-            assert len(head) == 2, f"the name has no family name: {name}"
-            assert head[0] in given, f"{head[0]} is not a Lowlands name: {name}"
-            assert head[1] in families, f"{head[1]} is not a Lowlands family: {name}"
-            if len(parts) > 1:
-                assert parts[1].startswith("the "), f"the trade reads oddly: {name}"
-        report["named_with_trade"] = sum(1 for n in found if ", " in n)
+            assert " " not in name and "," not in name, \
+                f"the name is not one word: {name}"
+            assert name in given, f"{name} is not a Lowlands name"
+        report["one_word"] = sum(1 for n in found if " " not in n and "," not in n)
 
-        # No two villagers share a full name.
-        assert len(set(found)) == len(found), f"two villagers share a name: {found}"
-
-        # The names do not move. (The trade in a name may change: a villager
-        # that finds a job gets its trade back.)
-        before = [n.split(", ")[0] for n in found]
+        # The names do not move.
+        before = list(found)
         wait(60)
         after = names_of()
-        assert [n.split(", ")[0] for n in after] == before, \
-            f"a name changed: {before} -> {after}"
+        assert after == before, f"a name changed: {before} -> {after}"
         report["stable"] = True
-        report["trades"] = trades
 
         # A name the player gives is never overwritten. (The game keeps a
         # villager's name as plain text, so the merge is a plain string.)
@@ -197,14 +180,14 @@ def main():
 
         shot("village", (0, 90, 0))
         report["passed"] = True
-        say(f"{len(found)} villagers named from the Lowlands, "
-            f"{report['named_with_trade']} of them with a trade, and a player's own name kept")
+        say(f"{len(found)} villagers named, each with a one-word Lowlands name, "
+            f"and a player's own name kept")
     except Exception as exc:
         report["error"] = str(exc)
         say(f"FAILED: {exc}")
         raise
     finally:
-        (OUT / "names-v02-report.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
+        (OUT / "names-v03-report.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
         try:
             ctl("quit", timeout=90)
         except Exception as exc:
