@@ -64,17 +64,36 @@ pub fn named_by_us(region: &Region, id: u32, current: &str) -> bool {
     head == legacy
 }
 
+/// The names a villager answers when nobody has named it.
+///
+/// `Entity.getName` falls back to the type's name, and `Villager.getTypeName`
+/// returns its profession's: `entity.minecraft.villager.farmer` in the language
+/// table, which reads `Farmer`. Taken from the game's own `en_us.json` rather
+/// than typed by hand, so the list is exactly what the fallback can produce.
+/// `Villager` appears twice in that file (a profession and the plain type
+/// name); once here is enough.
+const PROFESSION_NAMES: &[&str] = &[
+    "Armorer", "Butcher", "Cartographer", "Cleric", "Farmer", "Fisherman", "Fletcher",
+    "Leatherworker", "Librarian", "Mason", "Nitwit", "Shepherd", "Toolsmith", "Villager",
+    "Weaponsmith",
+];
+
 /// Whether a resolved name means the villager has no name of its own.
 ///
-/// `Entity.getName` falls back to the type's name, and for a villager that is
-/// its profession: `entity.minecraft.villager.farmer` (`mobs/villager_identity.rs`
-/// at the pinned build). A plain text read of that translation component comes
-/// back as the key, or empty where the reader drops it, so both spellings mean
-/// "unnamed". A name a player gave is never either, which is what keeps a name
-/// tag's work safe.
+/// A villager nobody named reads as its profession — `Farmer`, `Librarian` — and
+/// a reader that hands back the raw translation key instead spells it
+/// `entity.minecraft.villager.farmer`. Both mean "unnamed". A name a player gave
+/// is neither, which is what keeps a name tag's work safe.
+///
+/// The one way to be wrong: a player who names a villager exactly a profession
+/// name. That reads as unnamed and is replaced. The alternative — asking the
+/// game whether a custom name is set — is not in the API: `EntityRef` exposes
+/// the resolved `name` and `custom_name_visible`, never the custom name itself.
 pub fn is_unnamed(resolved: &str) -> bool {
     let resolved = resolved.trim();
-    resolved.is_empty() || resolved.starts_with("entity.")
+    resolved.is_empty()
+        || resolved.starts_with("entity.")
+        || PROFESSION_NAMES.contains(&resolved)
 }
 
 /// What to do with one villager this tick.
@@ -201,9 +220,12 @@ mod tests {
     }
 
     #[test]
-    fn an_unnamed_villager_reads_as_its_profession_key() {
-        // What `Entity.getName` resolves to for a villager nobody named, and
-        // what a text read that drops translation components gives instead.
+    fn an_unnamed_villager_reads_as_its_profession() {
+        // What `Entity.getName` resolves to for a villager nobody named: the
+        // profession's display name, or the raw key where a reader keeps it.
+        for profession in PROFESSION_NAMES {
+            assert!(is_unnamed(profession), "{profession} should read as unnamed");
+        }
         assert!(is_unnamed("entity.minecraft.villager.farmer"));
         assert!(is_unnamed("entity.minecraft.villager.none"));
         assert!(is_unnamed(""));
@@ -214,14 +236,29 @@ mod tests {
     fn a_players_name_is_never_taken_for_unnamed() {
         assert!(!is_unnamed("Bartholomew"));
         assert!(!is_unnamed("Elsbeth"));
-        // A name that merely starts with a word is not a translation key.
         assert!(!is_unnamed("entity"));
+        // Not a profession, so a name tag's work stands.
+        assert!(!is_unnamed("Old Tom"));
+    }
+
+    #[test]
+    fn every_profession_name_is_one_the_language_file_has() {
+        // The list is transcribed from the game's `en_us.json`; this pins the
+        // ones the fallback can actually produce so a typo cannot silently
+        // stop a profession from being recognised.
+        for name in ["Farmer", "Librarian", "Weaponsmith", "Nitwit", "Villager"] {
+            assert!(PROFESSION_NAMES.contains(&name), "{name} is missing");
+        }
+        let unique: HashSet<&&str> = PROFESSION_NAMES.iter().collect();
+        assert_eq!(unique.len(), PROFESSION_NAMES.len(), "the list repeats a name");
     }
 
     #[test]
     fn an_unnamed_villager_is_given_its_name() {
         let region = REGIONS[0];
         let want = name_for(region, 4242);
+        // The realistic read, and the raw-key one.
+        assert_eq!(decide(region, 4242, "Farmer"), Decision::Name);
         assert_eq!(decide(region, 4242, "entity.minecraft.villager.farmer"), Decision::Name);
         assert_eq!(decide(region, 4242, ""), Decision::Name);
         // ... and once named, the next tick writes nothing.
